@@ -5,6 +5,7 @@ def call(Map configMap) {
         environment {
             packageVersion = ''
             nexusURL = '35.175.173.5:8081'
+            BRANCH_NAME = "${env.BRANCH_NAME ?: env.GIT_BRANCH?.replaceAll('origin/', '') ?: 'unknown'}"
         }
 
         options {
@@ -23,41 +24,40 @@ def call(Map configMap) {
                         def packageJson = readJSON file: 'package.json'
                         packageVersion = packageJson.version
                         echo "application version: $packageVersion"
+                        echo "Branch Name: ${env.BRANCH_NAME}"
                     }
                 }
             }
 
             stage('Install dependencies') {
                 steps {
-                    sh """
-                        npm install
-                    """
+                    sh 'npm install'
                 }
             }
 
             stage('Unit tests') {
                 steps {
-                    sh """
-                        echo "unit tests will run here"
-                    """
+                    sh 'echo "unit tests will run here"'
                 }
             }
 
             stage('Sonar Scan') {
                 steps {
-                    sh """
-                        sonar-scanner
-                    """
+                    sh 'sonar-scanner'
                 }
             }
 
             stage('Build') {
                 steps {
-                    sh """
-                        ls -la
-                        zip -q -r ${configMap.component}.zip ./* -x ".git" -x "*.zip"
-                        ls -ltr
-                    """
+                    script {
+                        def artifactName = "${configMap.component}-${packageVersion}-${BRANCH_NAME}.zip"
+                        env.ARTIFACT_NAME = artifactName
+                        sh """
+                            ls -la
+                            zip -q -r ${artifactName} ./* -x ".git" -x "*.zip"
+                            ls -ltr
+                        """
+                    }
                 }
             }
 
@@ -74,8 +74,8 @@ def call(Map configMap) {
                         artifacts: [
                             [
                                 artifactId: "${configMap.component}",
-                                classifier: '',
-                                file: "${configMap.component}.zip",
+                                classifier: "${BRANCH_NAME}",
+                                file: "${ARTIFACT_NAME}",
                                 type: 'zip'
                             ]
                         ]
@@ -83,5 +83,5 @@ def call(Map configMap) {
                 }
             }
         }
-    } 
-} 
+    }
+}
