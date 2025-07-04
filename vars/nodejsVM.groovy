@@ -5,7 +5,7 @@ def call(Map configMap) {
         environment {
             packageVersion = ''
             nexusURL = '35.175.173.5:8081'
-            BRANCH_NAME = "${env.BRANCH_NAME ?: env.GIT_BRANCH?.replaceAll('origin/', '') ?: 'unknown'}"
+            branchName = ''
         }
 
         options {
@@ -18,13 +18,22 @@ def call(Map configMap) {
         }
 
         stages {
+            stage('Set Branch Info') {
+                steps {
+                    script {
+                        // Get branch name cleanly
+                        branchName = env.BRANCH_NAME ?: env.GIT_BRANCH?.replaceAll('origin/', '') ?: 'unknown'
+                        echo "Triggered by branch: ${branchName}"
+                    }
+                }
+            }
+
             stage('Get the version') {
                 steps {
                     script {
                         def packageJson = readJSON file: 'package.json'
                         packageVersion = packageJson.version
-                        echo "application version: $packageVersion"
-                        echo "Branch Name: ${env.BRANCH_NAME}"
+                        echo "Application version: $packageVersion"
                     }
                 }
             }
@@ -37,7 +46,7 @@ def call(Map configMap) {
 
             stage('Unit tests') {
                 steps {
-                    sh 'echo "unit tests will run here"'
+                    sh 'echo "Unit tests will run here"'
                 }
             }
 
@@ -49,15 +58,10 @@ def call(Map configMap) {
 
             stage('Build') {
                 steps {
-                    script {
-                        def artifactName = "${configMap.component}-${packageVersion}-${BRANCH_NAME}.zip"
-                        env.ARTIFACT_NAME = artifactName
-                        sh """
-                            ls -la
-                            zip -q -r ${artifactName} ./* -x ".git" -x "*.zip"
-                            ls -ltr
-                        """
-                    }
+                    sh """
+                        echo "Zipping artifact for branch: ${branchName}"
+                        zip -q -r ${configMap.component}-${branchName}.zip ./* -x ".git" -x "*.zip"
+                    """
                 }
             }
 
@@ -67,21 +71,19 @@ def call(Map configMap) {
                         nexusVersion: 'nexus3',
                         protocol: 'http',
                         nexusUrl: pipelineGlobals.nexusURL(),
-                        groupId: 'com.roboshop',
+                        groupId: "com.roboshop.${branchName}",
                         version: "${packageVersion}",
                         repository: "${configMap.component}",
                         credentialsId: 'nexus-auth',
-                        artifacts: [
-                            [
-                                artifactId: "${configMap.component}",
-                                classifier: "${BRANCH_NAME}",
-                                file: "${ARTIFACT_NAME}",
-                                type: 'zip'
-                            ]
-                        ]
+                        artifacts: [[
+                            artifactId: "${configMap.component}",
+                            classifier: '',
+                            file: "${configMap.component}-${branchName}.zip",
+                            type: 'zip'
+                        ]]
                     )
                 }
             }
         }
-    }
+    } 
 }
