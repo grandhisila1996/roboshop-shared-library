@@ -1,14 +1,11 @@
 def call(Map configMap){
     pipeline {
-        agent {
-            node {
-                label 'AGENT-1'
-            }
-        }
+        agent any
+
         environment { 
             packageVersion = ''
             // can maintain in pipeline globals
-            //nexusURL = '172.31.5.95:8081'
+            nexusURL = '35.175.173.5:8081'
         }
         options {
             timeout(time: 1, unit: 'HOURS')
@@ -53,8 +50,8 @@ def call(Map configMap){
             stage('Sonar Scan'){
                 steps{
                     sh """
-                        echo "usually command here is sonar-scanner"
-                        echo "sonar scan will run here"
+                         sonar-scanner
+                       
                     """
                 }
             }
@@ -86,24 +83,24 @@ def call(Map configMap){
                     )
                 }
             }
-            stage('Deploy') {
-                when {
-                    expression{
-                        params.Deploy
-                    }
-                }
-                steps {
-                    script {
-                            def params = [
-                                string(name: 'version', value: "$packageVersion"),
-                                string(name: 'environment', value: "dev")
-                                booleanParam(name: 'Create', value: "${params.Deploy}")
-                            ]
-                            build job: "../${configMap.component}-deploy", wait: true, parameters: params
-                        }
-                }
-            }
-        }
+        //     stage('Deploy') {
+        //         when {
+        //             expression{
+        //                 params.Deploy
+        //             }
+        //         }
+        //         steps {
+        //             script {
+        //                     def params = [
+        //                         string(name: 'version', value: "$packageVersion"),
+        //                         string(name: 'environment', value: "dev")
+        //                         booleanParam(name: 'Create', value: "${params.Deploy}")
+        //                       ]
+        //                     build job: "../${configMap.component}-deploy", wait: true, parameters: params
+        //                 } 
+        //         }
+        //     }
+        // }
         // post build
         post { 
             always { 
