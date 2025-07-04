@@ -1,28 +1,21 @@
-def call(Map configMap){
+def call(Map configMap) {
     pipeline {
         agent any
 
-        environment { 
+        environment {
             packageVersion = ''
-            // can maintain in pipeline globals
             nexusURL = '35.175.173.5:8081'
         }
+
         options {
             timeout(time: 1, unit: 'HOURS')
             disableConcurrentBuilds()
         }
+
         parameters {
-            // string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
-
-            // text(name: 'BIOGRAPHY', defaultValue: '', description: 'Enter some information about the person')
-
             booleanParam(name: 'Deploy', defaultValue: false, description: 'Toggle this value')
-
-            // choice(name: 'CHOICE', choices: ['One', 'Two', 'Three'], description: 'Pick something')
-
-            // password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'Enter a password')
         }
-        // build
+
         stages {
             stage('Get the version') {
                 steps {
@@ -33,6 +26,7 @@ def call(Map configMap){
                     }
                 }
             }
+
             stage('Install dependencies') {
                 steps {
                     sh """
@@ -40,6 +34,7 @@ def call(Map configMap){
                     """
                 }
             }
+
             stage('Unit tests') {
                 steps {
                     sh """
@@ -47,14 +42,15 @@ def call(Map configMap){
                     """
                 }
             }
-            stage('Sonar Scan'){
-                steps{
+
+            stage('Sonar Scan') {
+                steps {
                     sh """
-                         sonar-scanner
-                       
+                        sonar-scanner
                     """
                 }
             }
+
             stage('Build') {
                 steps {
                     sh """
@@ -64,6 +60,7 @@ def call(Map configMap){
                     """
                 }
             }
+
             stage('Publish Artifact') {
                 steps {
                     nexusArtifactUploader(
@@ -75,12 +72,16 @@ def call(Map configMap){
                         repository: "${configMap.component}",
                         credentialsId: 'nexus-auth',
                         artifacts: [
-                            [artifactId: "${configMap.component}",
-                            classifier: '',
-                            file: "${configMap.component}.zip",
-                            type: 'zip']
+                            [
+                                artifactId: "${configMap.component}",
+                                classifier: '',
+                                file: "${configMap.component}.zip",
+                                type: 'zip'
+                            ]
                         ]
                     )
                 }
             }
-         }
+        }
+    } 
+} 
