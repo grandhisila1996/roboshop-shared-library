@@ -4,7 +4,7 @@ def call(Map configMap) {
 
         environment {
             packageVersion = ''
-            nexusURL = '35.175.173.5:8081'
+            nexusURL = 'http://localhost:8081/'
             branchName = ''
         }
 
@@ -21,7 +21,6 @@ def call(Map configMap) {
             stage('Set Branch Info') {
                 steps {
                     script {
-                        // Get branch name cleanly
                         branchName = env.BRANCH_NAME ?: env.GIT_BRANCH?.replaceAll('origin/', '') ?: 'unknown'
                         echo "Triggered by branch: ${branchName}"
                     }
@@ -40,27 +39,27 @@ def call(Map configMap) {
 
             stage('Install dependencies') {
                 steps {
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
 
             stage('Unit tests') {
                 steps {
-                    sh 'echo "Unit tests will run here"'
+                    bat 'echo Unit tests will run here'
                 }
             }
 
             stage('Sonar Scan') {
                 steps {
-                    sh 'sonar-scanner'
+                    bat 'sonar-scanner'
                 }
             }
 
             stage('Build') {
                 steps {
-                    sh """
-                        echo "Zipping artifact for branch: ${branchName}"
-                        zip -q -r ${configMap.component}-${branchName}.zip ./* -x ".git" -x "*.zip"
+                    bat """
+                        echo Zipping artifact for branch: ${branchName}
+                        powershell Compress-Archive -Path * -DestinationPath ${configMap.component}-${branchName}.zip -Force
                     """
                 }
             }
@@ -85,5 +84,5 @@ def call(Map configMap) {
                 }
             }
         }
-    } 
+    }
 }
