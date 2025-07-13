@@ -50,15 +50,21 @@ def call(Map configMap) {
                 }
             }
 
-            stage('Sonarqube Analysis') {
-                environment {
-                    // ✅ FIXED: Typo corrected (credentials -> credentials)
-                    SONAR_AUTH_TOKEN = credentials('sonarqube')
-                }
-                steps {
-                    bat 'sonar-scanner'
-                }
-            }
+stage('Sonarqube Analysis') {
+    steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
+            bat """
+                sonar-scanner ^
+                  -Dsonar.projectKey=${configMap.component} ^
+                  -Dsonar.sources=. ^
+                  -Dsonar.host.url=http://localhost:9000 ^
+                  -Dsonar.token=%SONAR_TOKEN%
+            """
+        }
+    }
+}
+
+
 
             stage('Build') {
                 steps {
