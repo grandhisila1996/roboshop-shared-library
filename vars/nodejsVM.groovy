@@ -6,6 +6,7 @@ def call(Map configMap) {
             packageVersion = ''
             nexusURL = 'http://localhost:8081/'
             branchName = ''
+            SONAR_HOST_URL = 'http://localhost:9000/' // required by sonar-scanner
         }
 
         options {
@@ -49,7 +50,11 @@ def call(Map configMap) {
                 }
             }
 
-            stage('Sonar Scan') {
+            stage('Sonarqube Analysis') {
+                environment {
+                    // ✅ FIXED: Typo corrected (credentials -> credentials)
+                    SONAR_AUTH_TOKEN = credentials('sonarqube')
+                }
                 steps {
                     bat 'sonar-scanner'
                 }
