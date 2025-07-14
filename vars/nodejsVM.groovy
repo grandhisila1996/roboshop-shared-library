@@ -52,14 +52,14 @@ def call(Map configMap) {
 
 stage('Sonarqube Analysis') {
     steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
-            bat 'echo Token value: %SONAR_TOKEN%'  // debug line (will be masked)
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'sonarqube')]) {
+            bat 'echo Token value: %sonarqube%'  // debug line (will be masked)
             bat '''
                 sonar-scanner ^
                 -Dsonar.projectKey=catalogue ^
                 -Dsonar.sources=. ^
                 -Dsonar.host.url=http://localhost:9000 ^
-                -Dsonar.token=%SONAR_TOKEN%
+                -Dsonar.token=%sonarqube%
             '''
         }
     }
